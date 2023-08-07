@@ -38,8 +38,8 @@ namespace Api
 
             var credentials = Encoding.UTF8.GetString(
                 Convert.FromBase64String(authHeader.Parameter)).Split(':');
-            var password = credentials[0];
-            var username = credentials[1];
+            var username = credentials[0];
+            var password = credentials[1];
 
             if (!await _authService.ValidateCredentials(username, password))
             {

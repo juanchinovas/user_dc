@@ -19,7 +19,7 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
-        services.AddScoped<ISaver<User>, AddUserManager>();
+        services.AddScoped<ISaveable<User>, AddUserManager>();
         services.AddScoped<IQuerableFiltrable<User, UserFilter>, QueryUserManager>();
         services.AddTransient<IFileProcessor, UserInfoBatchCsvFileProcessor>();
         services.AddScoped<IAuthService, AuthService>();

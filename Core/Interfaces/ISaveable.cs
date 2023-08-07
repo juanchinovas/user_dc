@@ -1,6 +1,6 @@
 ﻿namespace Domain.Interfaces;
 
-public interface ISaver<T>
+public interface ISaveable<T>
 {
     T Save(T data);
 }

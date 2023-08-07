@@ -4,7 +4,7 @@ using Domain.Interfaces;
 
 namespace Application.Users.Managers;
 
-public class AddUserManager : ISaver<User>
+public class AddUserManager : ISaveable<User>
 {
     private readonly IDataHandler<User> _dataHandler;
 

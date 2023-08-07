@@ -15,12 +15,12 @@ namespace Api.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly ISaver<User> _userSaver;
+        private readonly ISaveable<User> _userSaver;
         private readonly IQuerableFiltrable<User, UserFilter> _userQuerable;
         private readonly IFileProcessor _fileProcessor;
 
         public UsersController(
-            ISaver<User> userSaver,
+            ISaveable<User> userSaver,
             IQuerableFiltrable<User, UserFilter> userQuerable,
             IFileProcessor fileProcessor)
         {
@@ -37,7 +37,9 @@ namespace Api.Controllers
         public ActionResult Get([FromQuery] UserFilter userFilter)
         {
             var (totalItems, userList) = _userQuerable.Get(userFilter);
-            Pagination<User> pagination = Pagination<User>.Create(userList, userFilter.PageIndex, userFilter.PageSize, totalItems);
+            var pagination = Pagination<User>.Create(
+                userList, userFilter.PageIndex, userFilter.PageSize, totalItems
+            );
             return Ok(AppResponse<Pagination<User>>.Success(pagination));
         }
 

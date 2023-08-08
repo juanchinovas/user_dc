@@ -9,6 +9,7 @@ using System.Reflection;
 using FluentValidation;
 using Api.Services;
 using Application.Common.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Application;
 
@@ -20,9 +21,19 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
         services.AddScoped<ISaveable<User>, AddUserManager>();
-        services.AddScoped<IQuerableFiltrable<User, UserFilter>, QueryUserManager>();
+        services.AddScoped<IQuerableFilterable<User, UserFilter>, QueryUserManager>();
         services.AddTransient<IFileProcessor, UserInfoBatchCsvFileProcessor>();
-        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IAuthService, AuthService>(); 
+        services.AddSingleton<ICacheService>((_) =>
+            new MemoryCacheService(
+                new MemoryCache(
+                    new MemoryCacheOptions
+                    {
+                        SizeLimit = 1024
+                    }
+                )
+            )
+        );
 
 
         return services;

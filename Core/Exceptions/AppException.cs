@@ -7,6 +7,6 @@
             Errors = errors;
         }
 
-        public IEnumerable<string>? Errors { get; private set; }
+        public IEnumerable<string>? Errors { get; private set; } = Array.Empty<string>();
     }
 }

@@ -6,6 +6,7 @@ using Application.Common.Models;
 using Domain.Exceptions;
 using System.Text.Json;
 using System.Text;
+using Azure;
 
 namespace Test.Application;
 
@@ -26,59 +27,38 @@ public class CustomRequestMiddlewareTest
     public async void Should_Response_With_AppResponse_When_Processing_Request_And_Throw_Exception()
     {
         var exception = new Exception("Oops");
-        string? actualValue = null;
         var expectedValue = JsonSerializer.Serialize(
                             AppResponse<AppException>.Fail(
                                 new AppException(exception.Message)));
 
         RequestDelegate requestDelegate = (HttpContext ctx) => Task.FromException(exception);
         var middleware = new CustomRequestMiddleware(requestDelegate);
-        var mockedHttpContext = new Mock<HttpContext>();
-        mockedHttpContext.SetupProperty(x => x.Response.StatusCode);
-        mockedHttpContext.Setup(
-            context => context.Response.Body.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>())
-            )
-            .Callback((byte[] data, int offset, int length, CancellationToken token) => {
-                if (length > 0)
-                {
-                    actualValue = Encoding.UTF8.GetString(data);
-                }
-            })
-            .Returns(Task.CompletedTask);
+        var mockedHttpContext = new DefaultHttpContext();
+        mockedHttpContext.Response.Body = new MemoryStream();
+        mockedHttpContext.Response.Body.Seek(0, SeekOrigin.Begin);
 
-        await middleware.Invoke(mockedHttpContext.Object);
+        await middleware.Invoke(mockedHttpContext);
 
-        actualValue.Should().Be(expectedValue);
-        mockedHttpContext.Object.Response.StatusCode.Should().Be(409);
-
+        mockedHttpContext.Response.StatusCode.Should().Be(409);
+        mockedHttpContext.Response.Body.Length.Should().Be(expectedValue.Length);
     }
 
     [Fact]
     public async void Should_Response_With_AppResponse_When_Processing_Request_And_Throw_AppException()
     {
         var exception = new AppException("Oops");
-        string? actualValue = null;
         var expectedValue = JsonSerializer.Serialize(
                             AppResponse<AppException>.Fail(exception));
 
         RequestDelegate requestDelegate = (HttpContext ctx) => Task.FromException(exception);
         var middleware = new CustomRequestMiddleware(requestDelegate);
-        var mockedHttpContext = new Mock<HttpContext>();
-        mockedHttpContext.SetupProperty(x => x.Response.StatusCode);
-        mockedHttpContext.Setup(
-            context => context.Response.Body.WriteAsync(It.IsAny<byte[]>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>())
-            )
-            .Callback((byte[] data, int offset, int length, CancellationToken token) => {
-                if (length > 0)
-                {
-                    actualValue = Encoding.UTF8.GetString(data);
-                }
-            })
-            .Returns(Task.CompletedTask);
+        var mockedHttpContext = new DefaultHttpContext();
+        mockedHttpContext.Response.Body = new MemoryStream();
+        mockedHttpContext.Response.Body.Seek(0, SeekOrigin.Begin);
 
-        await middleware.Invoke(mockedHttpContext.Object);
+        await middleware.Invoke(mockedHttpContext);
 
-        actualValue.Should().Be(expectedValue);
-        mockedHttpContext.Object.Response.StatusCode.Should().Be(409);
+        mockedHttpContext.Response.StatusCode.Should().Be(409);
+        mockedHttpContext.Response.Body.Length.Should().Be(expectedValue.Length);
     }
 }

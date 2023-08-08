@@ -18,7 +18,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "username": "testUser",
-        "password": "Pa$$w0rd"
+        "password": "@_Pa$$w0rd_@"
       }
     },
     "IIS Express": {

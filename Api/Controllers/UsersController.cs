@@ -16,12 +16,12 @@ namespace Api.Controllers
     public class UsersController : ControllerBase
     {
         private readonly ISaveable<User> _userSaver;
-        private readonly IQuerableFiltrable<User, UserFilter> _userQuerable;
+        private readonly IQuerableFilterable<User, UserFilter> _userQuerable;
         private readonly IFileProcessor _fileProcessor;
 
         public UsersController(
             ISaveable<User> userSaver,
-            IQuerableFiltrable<User, UserFilter> userQuerable,
+            IQuerableFilterable<User, UserFilter> userQuerable,
             IFileProcessor fileProcessor)
         {
             _userSaver = userSaver;
@@ -36,11 +36,8 @@ namespace Api.Controllers
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         public ActionResult Get([FromQuery] UserFilter userFilter)
         {
-            var (totalItems, userList) = _userQuerable.Get(userFilter);
-            var pagination = Pagination<User>.Create(
-                userList, userFilter.PageIndex, userFilter.PageSize, totalItems
-            );
-            return Ok(AppResponse<Pagination<User>>.Success(pagination));
+            var resumen = _userQuerable.Get(userFilter) as Pagination<User>;
+            return Ok(AppResponse<Pagination<User>>.Success(resumen));
         }
 
         [HttpPost(Name = nameof(Post))]

@@ -2,8 +2,6 @@
 using Domain.Entities;
 using Microsoft.Data.SqlClient;
 using System.Data;
-using System.Data.Common;
-using System.IO;
 using System.Text;
 
 namespace Infrastructure.Data.LocalDb;
@@ -22,21 +20,15 @@ internal class UserTableQueryHelper
                 city
             )";
 
-    public static bool IsTableCreated(string tableName, IDbConnection connection)
+    public static string IsTableCreatedQuery()
     {
-        var query = $"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = '{tableName}'";
-        using (IDbCommand command = new SqlCommand(query))
-        {
-            command.Connection = connection;
-            if (connection.State == ConnectionState.Closed) connection.Open();
+        var query = @$"SELECT * FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = '{TABLE_NAME}'";
 
-            var firstColumn = command.ExecuteScalar();
-
-            return firstColumn is not null;
-        }
+        return query;
     }
 
-    public static bool CreateTable(IDbConnection connection)
+    public static string CreateTableQuery()
     {
         var query = @$"
             CREATE TABLE {TABLE_NAME} (
@@ -51,18 +43,11 @@ internal class UserTableQueryHelper
             );
             CREATE INDEX {TABLE_NAME}_age_country ON {TABLE_NAME} (age, country);
         ";
-        using (IDbCommand command = new SqlCommand(query))
-        {
-            command.Connection = connection;
-            if (connection.State == ConnectionState.Closed) connection.Open();
 
-            command.ExecuteNonQuery();
-        }
-
-        return true;
+        return query;
     }
 
-    public static User InsertUser(User user, IDbConnection connection)
+    public static string PrepareInsertUserQuery(User user)
     {
         var query = @$"
             {INSERT_QUERY}
@@ -77,35 +62,8 @@ internal class UserTableQueryHelper
                 '{user.City}'
             );
         ";
-        using (IDbCommand command = new SqlCommand(query))
-        {
-            command.Connection = connection;
-            if (connection.State == ConnectionState.Closed) connection.Open();
 
-            var lastInsertedId = command.ExecuteScalar();
-            user.Id = (int)lastInsertedId;
-        }
-
-        return user;
-    }
-    
-    public static bool BulkUserDataFrom(string absoluteFileTempDir, IDbConnection connection)
-    {
-        var query = @$"
-            BULK INSERT {TABLE_NAME}
-            FROM '{absoluteFileTempDir}'
-            WITH (FIELDTERMINATOR = ',', ROWTERMINATOR = '\n', FIRSTROW = 2)
-        ";
-
-        using (IDbCommand command = new SqlCommand(query))
-        {
-            command.Connection = connection;
-            if (connection.State == ConnectionState.Closed) connection.Open();
-
-            var rowsAffected = command.ExecuteNonQuery();
-
-            return rowsAffected > 0;
-        }
+        return query;
     }
 
     public static StringBuilder PrepareQueryToBulkLoadUserInfoFromStream(Stream fileStream)
@@ -125,30 +83,30 @@ internal class UserTableQueryHelper
         return stringBuilder;
     }
     
-    public static string QueryUserData(UserFilter filter)
+    public static string UserDataQuery(UserFilter? filter)
     {
         var whereCondictions = new List<string>();
-        if (filter.Age.HasValue)
+        if (filter != null && filter.Age.HasValue)
         {
             whereCondictions.Add($"age = {filter.Age.Value}");
         }
-        if (!string.IsNullOrEmpty(filter.Country))
+        if (filter != null && !string.IsNullOrEmpty(filter.Country))
         {
             whereCondictions.Add($"country = '{filter.Country}'");
         }
-        if (!string.IsNullOrEmpty(filter.Province))
+        if (filter != null && !string.IsNullOrEmpty(filter.Province))
         {
             whereCondictions.Add($"province = '{filter.Province}'");
         }
-        if (!string.IsNullOrEmpty(filter.City))
+        if (filter != null && !string.IsNullOrEmpty(filter.City))
         {
             whereCondictions.Add($"city = '{filter.City}'");
         }
-        if (!string.IsNullOrEmpty(filter.FirstName))
+        if (filter != null && !string.IsNullOrEmpty(filter.FirstName))
         {
             whereCondictions.Add($"first_name = '{filter.FirstName}'");
         }
-        if (!string.IsNullOrEmpty(filter.LastName))
+        if (filter != null && !string.IsNullOrEmpty(filter.LastName))
         {
             whereCondictions.Add($"last_name = '{filter.LastName}'");
         }
@@ -163,8 +121,8 @@ internal class UserTableQueryHelper
             FROM {TABLE_NAME}
             {where}
             ORDER BY first_name, last_name
-            /*OFFSET {(filter.PageIndex - 1) * filter.PageSize} ROWS
-            FETCH NEXT {filter.PageSize} ROWS ONLY*/
+            {(filter == null || whereCondictions.Count > 0 ? ""
+               : $"OFFSET {(filter.PageIndex - 1) * filter.PageSize} ROWS FETCH NEXT {filter.PageSize} ROWS ONLY")}
         ";
 
         return query;

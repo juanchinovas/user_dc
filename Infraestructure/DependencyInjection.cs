@@ -11,7 +11,7 @@ namespace Infrastructure
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
         {
             // services.AddSingleton<IDataHandler<User>, MemoryDataManager>();
-            services.AddSingleton<IDataHandler<User>, LocalDbDataManager>();
+            services.AddSingleton<IDataHandler<User>, UserDataHandler>();
 
             return services;
         }
